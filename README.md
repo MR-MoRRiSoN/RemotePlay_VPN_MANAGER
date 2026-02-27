@@ -1,6 +1,6 @@
 # RemotePlay VPN Manager
 
-> A custom REST API for managing WireGuard VPN configurations — built with Spring Boot.
+> A lightweight custom REST API for managing WireGuard VPN — built with Spring Boot.
 
 [![Java](https://img.shields.io/badge/Java-Spring%20Boot-6DB33F?style=for-the-badge&logo=spring)](https://spring.io/projects/spring-boot)
 [![WireGuard](https://img.shields.io/badge/WireGuard-VPN-88171A?style=for-the-badge&logo=wireguard)](https://www.wireguard.com)
@@ -10,17 +10,20 @@
 
 ## 📋 About
 
-**RemotePlay VPN Manager** is a Spring Boot-based backend application that provides a custom REST API layer on top of WireGuard. It allows programmatic management of VPN peers, tunnels, and configurations — eliminating the need for manual CLI interaction with WireGuard.
+**RemotePlay VPN Manager** is a Spring Boot REST API that wraps WireGuard's CLI into clean HTTP endpoints. Nothing groundbreaking — but if you need a **simple, free, self-hosted solution** to manage WireGuard programmatically without paying for commercial tools like Tailscale or WireGuard Business, this does the job well.
+
+It handles peer creation, session management, time-limited access, and real-time connection monitoring — all over a straightforward REST interface.
 
 ---
 
 ## ✨ Features
 
-- 🔐 **WireGuard Integration** — manage peers, keys, and tunnel configs via REST API
-- 👤 **Role-based access control** — admin authentication & authorization
-- ⚙️ **System-level command execution** — interacts with WireGuard CLI under the hood
-- 🌐 **RESTful API** — clean endpoints for VPN lifecycle management
-- 🔒 **Secure by design** — credentials managed via environment variables
+- 🔐 **WireGuard lifecycle control** — start/stop the VPN service via API
+- 👥 **Peer management** — create, list, update and remove VPN clients
+- ⏱ **Time-limited sessions** — create clients with a session expiry time
+- 📊 **Connection monitoring** — see who's connected, how many, and their stats
+- 🔑 **Server key access** — retrieve VPN server public data
+- 🔒 **Role-based authentication** — secured with Spring Security
 
 ---
 
@@ -36,27 +39,64 @@
 
 ---
 
+## 📡 API Reference
+
+### Health Check
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/hi` | Health check — returns service greeting |
+
+---
+
+### VPN Service Control
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/vpn/start` | Start the WireGuard service |
+| `POST` | `/api/vpn/stop` | Stop the WireGuard service |
+| `GET` | `/api/vpn/status` | Get current WireGuard status (`STARTED` / `STOPPED`) |
+| `GET` | `/api/vpn/info` | Comprehensive overview — status, total clients, connected clients |
+
+---
+
+### Client Management
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/vpn/clients` | List all configured VPN clients |
+| `GET` | `/api/vpn/clients/connected` | List currently connected clients only |
+| `GET` | `/api/vpn/clients/detailed` | Detailed peer info for all clients |
+| `GET` | `/api/vpn/clients/active-clients-count` | Get count of active connections |
+| `POST` | `/api/vpn/create-client` | Create a new VPN client, returns credentials |
+| `POST` | `/api/vpn/create-client-with-limited-time/{time}` | Create a client with session expiry (`LocalDateTime`) |
+| `PUT` | `/api/vpn/update-vpn-client-limited-time` | Update an existing client's session end time |
+| `POST` | `/api/vpn/terminate-vpn-client-session` | Terminate a specific client's active session |
+
+---
+
+### Server Data
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/vpn/get-vpn-server-data` | Retrieve VPN server public key and config data |
+| `POST` | `/api/vpn/load-vpn-client-connection-list-data` | Get connection data for a list of client public keys |
+
+---
+
 ## 🚀 Getting Started
 
 ### Prerequisites
 
 - Java 17+
 - Maven 3.8+
-- WireGuard installed on the server (`apt install wireguard`)
-- Linux environment (Ubuntu recommended)
+- WireGuard installed (`apt install wireguard`)
+- Linux / Ubuntu server
 
 ### Installation
 
 ```bash
-# Clone the repository
 git clone https://github.com/MR-MoRRiSoN/RemotePlay_VPN_MANAGER.git
-
 cd RemotePlay_VPN_MANAGER
 ```
 
 ### Configuration
-
-Create your `application.properties` based on the example below:
 
 ```properties
 spring.application.name=VpnManager
@@ -67,43 +107,25 @@ ubuntu.sudo.password=${UBUNTU_SUDO_PASSWORD}
 server.port=8000
 ```
 
-Set environment variables before running:
-
-```bash
-export APP_MANAGER_USER=your_username
-export APP_MANAGER_PASSWD=your_password
-export APP_MANAGER_ROLE=ADMINISTRATOR
-export UBUNTU_SUDO_PASSWORD=your_sudo_password
-```
-
 ### Run
 
 ```bash
 ./mvnw spring-boot:run
 ```
 
-API will be available at `http://localhost:8000`
+API available at `http://localhost:8000`
 
 ---
 
-## 📡 API Overview
+## 💡 Why This?
 
-| Method | Endpoint | Description |
-|---|---|---|
-| `GET` | `/api/peers` | List all WireGuard peers |
-| `POST` | `/api/peers` | Add a new peer |
-| `DELETE` | `/api/peers/{id}` | Remove a peer |
-| `GET` | `/api/status` | WireGuard tunnel status |
-
-> Endpoints may vary — see source for full API documentation.
+There's nothing revolutionary here. But when you want a **free, self-hosted** alternative to paid WireGuard management tools, and you just need clean HTTP endpoints to automate peer creation and monitor connections — this is a solid, no-frills solution that gets out of your way.
 
 ---
 
-## 🔒 Security
+## 🔒 Security Note
 
-This application uses role-based authentication. All sensitive credentials must be provided via environment variables — **never hardcode credentials in `application.properties`**.
-
-For CI/CD pipelines, use GitHub Actions Secrets to inject environment variables at build/deploy time.
+Never commit real credentials to the repository. Use environment variables or GitHub Actions Secrets for all sensitive configuration.
 
 ---
 
